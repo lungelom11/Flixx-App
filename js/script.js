@@ -1,5 +1,15 @@
 const global = {
   currentPage: window.location.pathname,
+  search: {
+    term: "",
+    type: "",
+    page: 1,
+    totalPages: 1,
+  },
+  api: {
+    apiKey: "1ee4dbd88245c6ef9cc61c2d1042c921",
+    apiUrl: "https://api.themoviedb.org/3/",
+  },
 };
 //Show Spinner while loading
 function showSpinner() {
@@ -13,8 +23,8 @@ function hideSpinner() {
 
 //Fetch API Data from the TMDB
 async function getData(endpoint) {
-  const API_KEY = "1ee4dbd88245c6ef9cc61c2d1042c921";
-  const API_URL = "https://api.themoviedb.org/3/";
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
 
   showSpinner();
 
@@ -96,6 +106,49 @@ async function getPopularShows() {
     document.querySelector("#popular-shows").appendChild(div);
   });
 }
+// Search Movies/Shows
+async function search() {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  global.search.type = urlParams.get("type");
+  global.search.term = urlParams.get("search-term");
+
+  if (global.search.term !== "" && global.search.term !== null) {
+    const results = await searchAPIData();
+    console.log(results);
+  } else {
+    showAlert("Please enter a search term");
+  }
+}
+// Make Request To Search
+async function searchAPIData() {
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
+
+  showSpinner();
+
+  const response = await fetch(
+    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
+  );
+
+  const data = await response.json();
+
+  hideSpinner();
+
+  return data;
+}
+
+// Show Alert
+function showAlert(message, className) {
+  const alertEl = document.createElement("div");
+  alertEl.classList.add("alert", className);
+  alertEl.appendChild(document.createTextNode(message));
+  document.querySelector("#alert").appendChild(alertEl);
+
+  setTimeout(() => alertEl.remove(), 3000);
+}
+
 // Display Movie Details
 async function displayMovieDetails() {
   const movieId = window.location.search.split("=")[1];
@@ -337,7 +390,7 @@ function init() {
       displayMovieDetails();
       break;
     case "/search.html":
-      console.log("Search Page");
+      search();
       break;
     case "/tv-details.html":
       displayShowDetails();
